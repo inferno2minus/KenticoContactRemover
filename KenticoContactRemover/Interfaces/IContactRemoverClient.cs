@@ -2,6 +2,6 @@
 {
     public interface IContactRemoverClient
     {
-        public void Process();
+        public void Execute();
     }
 }
