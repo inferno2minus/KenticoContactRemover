@@ -24,7 +24,7 @@ namespace I2M.KenticoContactRemover
 
             var contactRemoverClient = serviceProvider.GetService<IContactRemoverClient>();
 
-            contactRemoverClient?.Process();
+            contactRemoverClient?.Execute();
         }
     }
 }

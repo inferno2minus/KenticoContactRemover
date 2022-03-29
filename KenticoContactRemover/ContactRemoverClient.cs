@@ -1,5 +1,4 @@
-﻿using I2M.KenticoContactRemover.Extensions;
-using I2M.KenticoContactRemover.Interfaces;
+﻿using I2M.KenticoContactRemover.Interfaces;
 using I2M.KenticoContactRemover.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,7 +20,7 @@ namespace I2M.KenticoContactRemover
             _logger = logger;
         }
 
-        public void Process()
+        public void Execute()
         {
             var watch = new Stopwatch();
 
@@ -34,7 +33,7 @@ namespace I2M.KenticoContactRemover
 
             var contactIds = _contactService.GetAllContacts();
 
-            foreach (var batchContactIds in contactIds.Batch(_options.BatchLimit))
+            foreach (var batchContactIds in contactIds.Chunk(_options.BatchLimit))
             {
                 var batches = batchContactIds.ToList();
 
