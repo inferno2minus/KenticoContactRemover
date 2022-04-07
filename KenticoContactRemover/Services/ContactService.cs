@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 
 namespace I2M.KenticoContactRemover.Services
 {
@@ -20,16 +21,16 @@ namespace I2M.KenticoContactRemover.Services
             _logger = logger;
         }
 
-        public List<int> GetAllContacts()
+        public List<Contact> GetAllContacts()
         {
-            var result = new List<int>();
+            var result = new List<Contact>();
 
             try
             {
-                var condition = string.Format(_options.InactiveQuery, DateTime.Now.AddDays(-_options.InactivePeriod));
+                var query = string.Format(_options.InactiveQuery, DateTime.Now.AddDays(-_options.InactivePeriod));
 
                 using var connection = new SqlConnection(_options.ConnectionString);
-                using var command = new SqlCommand(condition, connection);
+                using var command = new SqlCommand(query, connection);
 
                 connection.Open();
 
@@ -37,9 +38,12 @@ namespace I2M.KenticoContactRemover.Services
 
                 while (reader.Read())
                 {
-                    var contactId = reader.GetInt32(reader.GetOrdinal("ContactID"));
+                    var contact = new Contact
+                    {
+                        ContactId = reader.GetInt32(reader.GetOrdinal("ContactID"))
+                    };
 
-                    result.Add(contactId);
+                    result.Add(contact);
                 }
             }
             catch (Exception ex)
@@ -50,7 +54,7 @@ namespace I2M.KenticoContactRemover.Services
             return result;
         }
 
-        public void DeleteContacts(IEnumerable<int> contactIds)
+        public void DeleteContacts(IEnumerable<Contact> contacts)
         {
             try
             {
@@ -59,10 +63,11 @@ namespace I2M.KenticoContactRemover.Services
 
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = 0;
-                command.Parameters.Add("@where", SqlDbType.NVarChar).Value = BuildCondition(contactIds);
+                command.Parameters.Add("@where", SqlDbType.NVarChar).Value = GetWhereCondition(contacts);
                 command.Parameters.Add("@batchLimit", SqlDbType.Int).Value = _options.BatchLimit;
 
                 connection.Open();
+
                 command.ExecuteNonQuery();
             }
             catch (Exception ex)
@@ -71,9 +76,9 @@ namespace I2M.KenticoContactRemover.Services
             }
         }
 
-        private static string BuildCondition(IEnumerable<int> contactIds)
+        private static string GetWhereCondition(IEnumerable<Contact> contacts)
         {
-            return $"ContactID in ({string.Join(",", contactIds)})";
+            return $"ContactID in ({string.Join(",", contacts.Select(x => x.ContactId))})";
         }
     }
 }

@@ -22,30 +22,30 @@ namespace I2M.KenticoContactRemover
 
         public void Execute()
         {
-            var watch = new Stopwatch();
+            var stopwatch = new Stopwatch();
 
-            watch.Start();
+            stopwatch.Start();
 
-            _logger.LogInformation("Start cleaning");
+            _logger.LogInformation("Start cleaning contacts");
             _logger.LogInformation($"Config: BatchLimit: {_options.BatchLimit}, InactivePeriod: {_options.InactivePeriod}");
 
             var processedCount = 0;
 
-            var contactIds = _contactService.GetAllContacts();
+            var contacts = _contactService.GetAllContacts();
 
-            foreach (var batchContactIds in contactIds.Chunk(_options.BatchLimit))
+            foreach (var batchContacts in contacts.Chunk(_options.BatchLimit))
             {
-                var batches = batchContactIds.ToList();
+                var batches = batchContacts.ToList();
 
                 processedCount += batches.Count;
 
                 _contactService.DeleteContacts(batches);
 
-                var timeSpan = watch.Elapsed;
+                var elapsed = stopwatch.Elapsed;
 
-                _logger.LogInformation($"Processed: {processedCount} | {contactIds.Count - processedCount} | " +
-                                       $"Elapsed: {timeSpan.Hours}h {timeSpan.Minutes}m {timeSpan.Seconds}s | " +
-                                       $"{(int)(processedCount / (double)contactIds.Count * 100.0)}%");
+                _logger.LogInformation($"Processed: {processedCount} | {contacts.Count - processedCount} | " +
+                                       $"Elapsed: {elapsed.Hours}h {elapsed.Minutes}m {elapsed.Seconds}s | " +
+                                       $"{(int)(processedCount / (double)contacts.Count * 100.0)}%");
             }
 
             _logger.LogInformation("Done");
